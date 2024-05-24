@@ -138,6 +138,6 @@ parts:
     organize:
       '*.sh': usr/bin/
       '*.py': usr/bin/
-      # '*.yaml': usr/share/husarion-astra/config/
+      '*.yaml': usr/share/husarion-astra/config/
       # '*.xml': usr/share/husarion-astra/config/
       # '*.json': usr/share/husarion-astra/config/

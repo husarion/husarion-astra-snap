@@ -37,4 +37,4 @@ log() {
 #   log "Running with options: ${LAUNCH_OPTIONS}"
 # fi
 
-ros2 launch $SNAP/usr/bin/astra.launch.py ${LAUNCH_OPTIONS}
+ros2 launch $SNAP/usr/bin/astra.launch.py params_file:=$SNAP_COMMON/astra_params.yaml ${LAUNCH_OPTIONS}

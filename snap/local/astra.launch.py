@@ -43,16 +43,16 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    healthcheck_node = Node(
-        package="healthcheck_pkg",
-        executable="healthcheck_node",
-        name="healthcheck_astra",
-        namespace=device_namespace,
-        output="screen",
-    )
+    # healthcheck_node = Node(
+    #     package="healthcheck_pkg",
+    #     executable="healthcheck_node",
+    #     name="healthcheck_astra",
+    #     namespace=device_namespace,
+    #     output="screen",
+    # )
 
-    return [PushRosNamespace(robot_namespace), astra_node, healthcheck_node]
-
+    # return [PushRosNamespace(robot_namespace), astra_node, healthcheck_node]
+    return [PushRosNamespace(robot_namespace), astra_node]
 
 def generate_launch_description():
     return LaunchDescription(
