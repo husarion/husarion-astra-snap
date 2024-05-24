@@ -102,6 +102,16 @@ parts:
     override-pull: |
 
       craftctl default
+
+      git clone https://github.com/libuvc/libuvc.git
+      cd $CRAFT_PART_SRC/libuvc
+      mkdir build && cd build
+      cmake .. && make -j4
+      make install
+      ldconfig
+
+      cd $CRAFT_PART_SRC
+
       git clone https://github.com/ros-misc-utilities/ffmpeg_image_transport.git
       vcs import $CRAFT_PART_SRC < $CRAFT_PART_SRC/ffmpeg_image_transport/ffmpeg_image_transport.repos
       
