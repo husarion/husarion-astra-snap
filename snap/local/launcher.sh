@@ -8,33 +8,27 @@ log() {
 
 # Iterate over the snap parameters and retrieve their value.
 # If a value is set, it is forwarded to the launch file.
-# OPTIONS="\
-#  channel-type \
-#  serial-port \
-#  serial-baudrate \
-#  frame-id \
-#  inverted \
-#  angle-compensate \
-#  scan-mode \
-#  namespace \
-#  device-namespace \
-# "
+OPTIONS="\
+ params-file \
+ namespace \
+ device-namespace \
+"
 
-# LAUNCH_OPTIONS=""
+LAUNCH_OPTIONS=""
 
-# for OPTION in ${OPTIONS}; do
-#   VALUE="$(snapctl get driver.${OPTION})"
-#   if [ -n "${VALUE}" ]; then
-#     LAUNCH_OPTIONS+="${OPTION}:=${VALUE} "
-#   fi
-# done
+for OPTION in ${OPTIONS}; do
+  VALUE="$(snapctl get driver.${OPTION})"
+  if [ -n "${VALUE}" ]; then
+    LAUNCH_OPTIONS+="${OPTION}:=${VALUE} "
+  fi
+done
 
 # # Replace '-' with '_'
-# LAUNCH_OPTIONS=$(echo ${LAUNCH_OPTIONS} | tr - _)
+LAUNCH_OPTIONS=$(echo ${LAUNCH_OPTIONS} | tr - _)
 
-# if [ "${LAUNCH_OPTIONS}" ]; then
-#   # watch the log with: "journalctl -t rosbot-xl"
-#   log "Running with options: ${LAUNCH_OPTIONS}"
-# fi
+if [ "${LAUNCH_OPTIONS}" ]; then
+  # watch the log with: "journalctl -t husarion-astra"
+  log "Running with options: ${LAUNCH_OPTIONS}"
+fi
 
-ros2 launch $SNAP/usr/bin/astra.launch.py params_file:=$SNAP_COMMON/astra_params.yaml ${LAUNCH_OPTIONS}
+ros2 launch $SNAP/usr/bin/astra.launch.py ${LAUNCH_OPTIONS}

@@ -6,25 +6,26 @@ from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 
 def launch_setup(context, *args, **kwargs):
     params_file = LaunchConfiguration("params_file").perform(context)
-    robot_namespace = LaunchConfiguration("robot_namespace").perform(context)
+    ffmpeg_params_file = LaunchConfiguration("ffmpeg_params_file").perform(context)
+    namespace = LaunchConfiguration("namespace").perform(context)
     device_namespace = LaunchConfiguration("device_namespace").perform(context)
-    codec = LaunchConfiguration("codec").perform(context)
+    # codec = LaunchConfiguration("codec").perform(context)
 
     remapping = []
-    if robot_namespace:
-        remapping.append(("/tf", f"/{robot_namespace}/tf"))
-        remapping.append(("/tf_static", f"/{robot_namespace}/tf_static"))
+    if namespace:
+        remapping.append(("/tf", f"/{namespace}/tf"))
+        remapping.append(("/tf_static", f"/{namespace}/tf_static"))
 
-    ffmpeg_params = {
-        "ffmpeg_image_transport.preset": "ultrafast",
-        "ffmpeg_image_transport.tune": "zerolatency",
-    }
-    if codec == "nvidia":
-        ffmpeg_params["ffmpeg_image_transport.encoding"] = "hevc_nvenc"
-    if codec == "rpi":
-        ffmpeg_params["ffmpeg_image_transport.encoding"] = "h264_v4l2m2m"
-    if codec == "cpu":
-        ffmpeg_params["ffmpeg_image_transport.encoding"] = "libx264"
+    # ffmpeg_params = {
+    #     "ffmpeg_image_transport.preset": "ultrafast",
+    #     "ffmpeg_image_transport.tune": "zerolatency",
+    # }
+    # if codec == "nvidia":
+    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "hevc_nvenc"
+    # if codec == "rpi":
+    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "h264_v4l2m2m"
+    # if codec == "cpu":
+    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "libx264"
 
     astra_node = Node(
         package="astra_camera",
@@ -37,7 +38,8 @@ def launch_setup(context, *args, **kwargs):
                 "camera_link_frame_id": device_namespace + "_link",
             },
             params_file,
-            ffmpeg_params,
+            ffmpeg_params_file,
+            # ffmpeg_params,
         ],
         remappings=remapping,
         output="screen",
@@ -51,8 +53,8 @@ def launch_setup(context, *args, **kwargs):
     #     output="screen",
     # )
 
-    # return [PushRosNamespace(robot_namespace), astra_node, healthcheck_node]
-    return [PushRosNamespace(robot_namespace), astra_node]
+    # return [PushRosNamespace(namespace), astra_node, healthcheck_node]
+    return [PushRosNamespace(namespace), astra_node]
 
 def generate_launch_description():
     return LaunchDescription(
@@ -62,15 +64,15 @@ def generate_launch_description():
                 default_value="/husarion_utils/astra_params.yaml",
                 description="Full path to the Astra parameters file",
             ),
+            # DeclareLaunchArgument(
+            #     "codec",
+            #     default_value="rpi",
+            #     description="Select your codec depend on your hardware",
+            #     choices=["cpu", "nvidia", "rpi"],
+            # ),
             DeclareLaunchArgument(
-                "codec",
-                default_value="rpi",
-                description="Select your codec depend on your hardware",
-                choices=["cpu", "nvidia", "rpi"],
-            ),
-            DeclareLaunchArgument(
-                "robot_namespace",
-                default_value=EnvironmentVariable("ROBOT_NAMESPACE", default_value=""),
+                "namespace",
+                default_value=EnvironmentVariable("namespace", default_value=""),
                 description="Namespace which will appear in front of all topics (including /tf and /tf_static).",
             ),
             DeclareLaunchArgument(
