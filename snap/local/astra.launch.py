@@ -9,23 +9,11 @@ def launch_setup(context, *args, **kwargs):
     ffmpeg_params_file = LaunchConfiguration("ffmpeg_params_file").perform(context)
     namespace = LaunchConfiguration("namespace").perform(context)
     device_namespace = LaunchConfiguration("device_namespace").perform(context)
-    # codec = LaunchConfiguration("codec").perform(context)
 
     remapping = []
     if namespace:
         remapping.append(("/tf", f"/{namespace}/tf"))
         remapping.append(("/tf_static", f"/{namespace}/tf_static"))
-
-    # ffmpeg_params = {
-    #     "ffmpeg_image_transport.preset": "ultrafast",
-    #     "ffmpeg_image_transport.tune": "zerolatency",
-    # }
-    # if codec == "nvidia":
-    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "hevc_nvenc"
-    # if codec == "rpi":
-    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "h264_v4l2m2m"
-    # if codec == "cpu":
-    #     ffmpeg_params["ffmpeg_image_transport.encoding"] = "libx264"
 
     astra_node = Node(
         package="astra_camera",
@@ -39,7 +27,6 @@ def launch_setup(context, *args, **kwargs):
             },
             params_file,
             ffmpeg_params_file,
-            # ffmpeg_params,
         ],
         remappings=remapping,
         output="screen",
@@ -61,15 +48,14 @@ def generate_launch_description():
         [
             DeclareLaunchArgument(
                 "params_file",
-                default_value="/husarion_utils/astra_params.yaml",
+                default_value="/var/snap/husarion-astra/common/astra_params.yaml",
                 description="Full path to the Astra parameters file",
             ),
-            # DeclareLaunchArgument(
-            #     "codec",
-            #     default_value="rpi",
-            #     description="Select your codec depend on your hardware",
-            #     choices=["cpu", "nvidia", "rpi"],
-            # ),
+            DeclareLaunchArgument(
+                "ffmpeg_params_file",
+                default_value="/var/snap/husarion-astra/common/ffmpeg_params.yaml",
+                description="Full path to the FFMPEG plugin parameters file",
+            ),
             DeclareLaunchArgument(
                 "namespace",
                 default_value=EnvironmentVariable("namespace", default_value=""),
