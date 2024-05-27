@@ -36,7 +36,7 @@ jobs:
     # Save snap for subsequent job(s)
     - uses: actions/upload-artifact@v3
       with:
-        name: husarion-rplidar-snap
+        name: husarion-astra-snap
         path: ${{ steps.build-snap.outputs.snap }}
 
   publish:
@@ -48,7 +48,7 @@ jobs:
     # Retrieve the snap
     - uses: actions/download-artifact@v3
       with:
-        name: husarion-rplidar-snap
+        name: husarion-astra-snap
         path: .
 
     # Publish the snap on the store

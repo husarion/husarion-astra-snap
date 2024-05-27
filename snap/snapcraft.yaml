@@ -3,18 +3,32 @@ adopt-info: husarion-astra
 license: Apache-2.0
 summary: The husarion-astra
 description: |
-  The husarion-astra snap contains all the necessary software to bring the robot up
-  such as controller, robot state publisher etc.
+  The husarion-astra snap contains all the necessary software to bring the Astra camera used in ROSbot
 
-  It offers the following parameters,
+  It offers the following parameters:
 
-  - ros-domain-id
-  - ros-localhost-only
-  - transport
-  - serial-port
-  - driver.namespace
+    Key                 Default Value
+    driver              {...}
+    ros-domain-id       0
+    ros-localhost-only  0
+    transport           udp
 
-  which can be set as follows, e.g.,
+  The driver parameter is a dictionary that contains the following keys:
+
+    Key                            Default Value
+    driver.device-namespace        (unset)
+    driver.namespace               (unset)
+    driver.ffmpeg-image-transport  {...}
+    driver.params-file             /var/snap/husarion-astra/common/astra_params.yaml
+
+  The ffmpeg-image-transport parameter is a dictionary that contains the following keys:
+
+    Key                                     Default Value
+    driver.ffmpeg-image-transport.encoding  libx264
+    driver.ffmpeg-image-transport.preset    ultrafast
+    driver.ffmpeg-image-transport.tune      zerolatency
+
+  To set the parameters, use the snap set command, e.g.,
 
     snap set husarion-astra driver.namespace=robot
 
