@@ -1,7 +1,6 @@
 ---
 /**:
   ros__parameters:
-    # ffmpeg presets
     ffmpeg_image_transport:
 
       # find the list of available encoders by running `ffmpeg -encoders`

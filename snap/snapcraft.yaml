@@ -44,6 +44,10 @@ plugs:
     interface: shared-memory
     shared-memory: shm-slot
     private: false
+  ffmpeg-2204:
+    interface: content
+    target: ffmpeg-platform
+    default-provider: ffmpeg-2204
 
 apps:
 
@@ -99,6 +103,9 @@ parts:
       - ros-humble-tf2-ros
       - ffmpeg
       - ros-humble-cv-bridge
+      # needed to run ffmpeg without errors:
+      - libpulse-dev
+      - libblas3
     override-pull: |
 
       craftctl default
@@ -128,15 +135,13 @@ parts:
     plugin: nil
     override-build: |
       craftctl default
-      YQ_VERSION="v4.16.1"
+
+      YQ_VERSION="v4.35.1"
       TARGETARCH=$CRAFT_ARCH_BUILD_FOR
-
-      # $SNAPCRAFT_PART_INSTALL/usr/bin/yq
-
       curl -L "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${TARGETARCH}" -o $CRAFT_PART_BUILD/yq
     override-prime: |
       craftctl default
-      
+    
       cp $CRAFT_PART_BUILD/yq $CRAFT_PRIME/usr/bin/yq
       chmod +x $CRAFT_PRIME/usr/bin/yq
     build-packages:
