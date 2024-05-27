@@ -44,10 +44,6 @@ plugs:
     interface: shared-memory
     shared-memory: shm-slot
     private: false
-  ffmpeg-2204:
-    interface: content
-    target: ffmpeg-platform
-    default-provider: ffmpeg-2204
 
 apps:
 
