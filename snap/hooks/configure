@@ -1,0 +1,71 @@
+#!/bin/sh -e
+
+set -e
+
+# The configure hook is called every time one the following actions happen:
+# - initial snap installation
+# - snap refresh
+# - whenever the user runs snap set|unset to change a configuration option
+
+# Define a function to log and echo messages
+log_and_echo() {
+  local message="$1"
+  # Log the message with logger
+  logger -t "${SNAP_NAME}" "configure hook: $message"
+  # Echo the message to standard error
+  echo >&2 "$message"
+}
+
+log() {
+  local message="$1"
+  # Log the message with logger
+  logger -t "${SNAP_NAME}" "configure hook: $message"
+}
+
+$SNAP/usr/bin/configure_hook_ros.sh
+
+ASTRA_PARAMS_FILE="$(snapctl get driver.params-file)"
+
+# Check if the file exists
+if [ ! -f "$ASTRA_PARAMS_FILE" ]; then
+  log_and_echo "$ASTRA_PARAMS_FILE does not exist."
+  exit 1
+fi
+
+export LD_LIBRARY_PATH=$SNAP/usr/lib/$(uname -m)-linux-gnu/pulseaudio:$SNAP/usr/lib/$(uname -m)-linux-gnu/blas:$SNAP/usr/lib/$(uname -m)-linux-gnu/lapack:$LD_LIBRARY_PATH
+
+export FFMPEG_ENCODING=$(snapctl get driver.ffmpeg-image-transport.encoding)
+
+# Check if FFMPEG_ENCODING is set
+if [ -n "$FFMPEG_ENCODING" ]; then
+  # Run ffmpeg -codecs and check if the codec is available
+  if ! ffmpeg -encoders 2>/dev/null | awk '{print $2}' | grep -q "$FFMPEG_ENCODING"; then
+    log_and_echo "Error: Codec $FFMPEG_ENCODING is not available:"
+    # log_and_echo "Available codecs:"
+    # ffmpeg -encoders 2>/dev/null | awk '/^ V/ {print $0}'
+    exit 1
+  fi
+
+  cp $SNAP_COMMON/ffmpeg_params_template.yaml $SNAP_COMMON/ffmpeg_params.yaml
+  yq -i './**.ros__parameters.ffmpeg_image_transport = {}' $SNAP_COMMON/ffmpeg_params.yaml
+
+  # Get all options in JSON format
+  OPTIONS=$(snapctl get driver.ffmpeg-image-transport)
+  keys=$(echo $OPTIONS | yq '. | to_entries | .[].key')
+  for key in $keys; do
+    export FFMPEG_KEY=$key
+    export FFMPEG_VALUE=$(snapctl get driver.ffmpeg-image-transport.$FFMPEG_KEY)
+    yq -i './**.ros__parameters.ffmpeg_image_transport += {env(FFMPEG_KEY): env(FFMPEG_VALUE)}' $SNAP_COMMON/ffmpeg_params.yaml
+  done
+else
+  cp $SNAP_COMMON/ffmpeg_params_template.yaml $SNAP_COMMON/ffmpeg_params.yaml
+  yq -i './**.ros__parameters.ffmpeg_image_transport = {}' $SNAP_COMMON/ffmpeg_params.yaml
+fi
+
+# restart services with new ROS 2 config
+for service in daemon; do
+  if snapctl services ${SNAP_NAME}.${service} | grep -qw active; then
+    snapctl restart ${SNAP_NAME}.${service}
+    log "Restarted ${SNAP_NAME}.${service}"
+  fi
+done

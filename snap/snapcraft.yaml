@@ -1,0 +1,176 @@
+name: husarion-astra
+adopt-info: husarion-astra
+license: Apache-2.0
+summary: The husarion-astra
+description: |
+  The husarion-astra snap contains all the necessary software to bring the Astra camera used in ROSbot
+
+  It offers the following parameters:
+
+    Key                 Default Value
+    driver              {...}
+    ros-domain-id       0
+    ros-localhost-only  0
+    transport           udp
+
+  The driver parameter is a dictionary that contains the following keys:
+
+    Key                            Default Value
+    driver.device-namespace        (unset)
+    driver.namespace               (unset)
+    driver.ffmpeg-image-transport  {...}
+    driver.params-file             /var/snap/husarion-astra/common/astra_params.yaml
+
+  The ffmpeg-image-transport parameter is a dictionary that contains the following keys:
+
+    Key                                     Default Value
+    driver.ffmpeg-image-transport.encoding  libx264
+    driver.ffmpeg-image-transport.preset    ultrafast
+    driver.ffmpeg-image-transport.tune      zerolatency
+
+  To set the parameters, use the snap set command, e.g.,
+
+    snap set husarion-astra driver.namespace=robot
+
+grade: stable
+confinement: strict
+base: core22
+
+contact: https://github.com/husarion/husarion-astra-snap/issues
+issues: https://github.com/husarion/husarion-astra-snap/issues
+website: https://husarion.com/
+
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  # - build-on: amd64
+  #   build-for: arm64
+  - build-on: arm64
+    build-for: arm64
+
+slots:
+  shm-slot:
+    interface: shared-memory
+    write: ['*'] # paths are relative to /dev/shm
+
+plugs:
+  shm-plug:
+    interface: shared-memory
+    shared-memory: shm-slot
+    private: false
+
+apps:
+
+  daemon:
+    command: usr/bin/launcher.sh
+    command-chain: [usr/bin/ros_setup.sh]
+    daemon: simple
+    install-mode: enable
+    plugs: [network, network-bind, shm-plug, raw-usb]
+    slots: [shm-slot]
+    extensions: [ros2-humble-ros-base]
+
+  husarion-astra:
+    command: usr/bin/launcher.sh
+    command-chain: [usr/bin/check_daemon_running.sh, usr/bin/ros_setup.sh]
+    plugs: [network, network-bind, shm-plug, raw-usb]
+    slots: [shm-slot]
+    extensions: [ros2-humble-ros-base]
+
+  start:
+    command: usr/bin/start_launcher.sh
+
+  stop:
+    command: usr/bin/stop_launcher.sh
+
+parts:
+  husarion-astra:
+    plugin: colcon
+    source: https://github.com/rafal-gorecki/ros2_astra_camera.git
+    build-packages: 
+      - git
+      - libgoogle-glog-dev
+      - libusb-1.0-0-dev
+      - libeigen3-dev
+      - libgflags-dev
+      - nlohmann-json3-dev
+      - ros-humble-camera-info-manager
+      - ros-humble-image-geometry
+      - ros-humble-image-publisher
+      - ros-humble-image-transport
+      - ros-humble-image-transport-plugins
+      - ros-humble-tf2
+      - ros-humble-tf2-eigen
+      - ros-humble-tf2-sensor-msgs
+      - ros-humble-cv-bridge
+      - python3-vcstool
+    stage-packages: 
+      - libgoogle-glog-dev
+      - ros-humble-image-geometry
+      - ros-humble-image-publisher
+      - ros-humble-image-transport
+      - ros-humble-image-transport-plugins
+      - ros-humble-tf2-ros
+      - ffmpeg
+      - ros-humble-cv-bridge
+      # needed to run ffmpeg without errors:
+      - libpulse-dev
+      - libblas3
+    override-pull: |
+
+      craftctl default
+
+      git clone https://github.com/libuvc/libuvc.git
+      cd $CRAFT_PART_SRC/libuvc
+      mkdir build && cd build
+      cmake .. && make -j4
+      make install
+      ldconfig
+
+      cd $CRAFT_PART_SRC
+
+      git clone https://github.com/ros-misc-utilities/ffmpeg_image_transport.git
+      vcs import $CRAFT_PART_SRC < $CRAFT_PART_SRC/ffmpeg_image_transport/ffmpeg_image_transport.repos
+      
+      # Fix publish_tf_ parameter
+      sed -i 's/calcAndPublishStaticTransform();/if (!publish_tf_) return; calcAndPublishStaticTransform();/g' \
+        $CRAFT_PART_SRC/astra_camera/src/ob_camera_node.cpp
+
+      version="$(git describe --always --tags| sed -e 's/^v//;s/-/+git/;y/-/./')"
+      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+      craftctl set version="$version"
+      craftctl set grade="$grade"
+
+  yq:
+    plugin: nil
+    override-build: |
+      craftctl default
+
+      YQ_VERSION="v4.35.1"
+      TARGETARCH=$CRAFT_ARCH_BUILD_FOR
+      curl -L "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${TARGETARCH}" -o $CRAFT_PART_BUILD/yq
+    override-prime: |
+      craftctl default
+    
+      cp $CRAFT_PART_BUILD/yq $CRAFT_PRIME/usr/bin/yq
+      chmod +x $CRAFT_PRIME/usr/bin/yq
+    build-packages:
+      - curl
+   
+  # copy local scripts to the snap usr/bin
+  local-files-ros:
+    plugin: dump
+    source: snap/local/ros_common/
+    organize:
+      '*.sh': usr/bin/
+      '*.xml': usr/share/husarion-astra/config/
+
+  local-files:
+    plugin: dump
+    source: snap/local/
+    organize:
+      '*.sh': usr/bin/
+      '*.py': usr/bin/
+      '*.yaml': usr/share/husarion-astra/config/
+      # '*.xml': usr/share/husarion-astra/config/
+      # '*.json': usr/share/husarion-astra/config/
