@@ -104,6 +104,7 @@ parts:
       - ros-humble-tf2-sensor-msgs
       - ros-humble-cv-bridge
       - python3-vcstool
+      - libjpeg-dev
     stage-packages: 
       - libgoogle-glog-dev
       - ros-humble-image-geometry
@@ -116,11 +117,12 @@ parts:
       # needed to run ffmpeg without errors:
       - libpulse-dev
       - libblas3
+      - libjpeg-turbo8-dev
     override-pull: |
 
       craftctl default
 
-      git clone https://github.com/libuvc/libuvc.git
+      git clone https://github.com/libuvc/libuvc.git -b v0.0.7
       cd $CRAFT_PART_SRC/libuvc
       mkdir build && cd build
       cmake .. && make -j4
