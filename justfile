@@ -67,3 +67,32 @@ iterate:
     seconds=$(( duration % 60 ))
 
     printf "Script completed in %02d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
+
+iterate-fast:
+    #!/bin/bash
+    start_time=$(date +%s)
+    
+    echo "Starting script..."
+
+    sudo snap remove husarion-astra
+    sudo rm -rf squashfs-root/
+    sudo rm -rf husarion-astra*_arm64.snap
+    export SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
+    snapcraft
+    unsquashfs husarion-astra*_arm64.snap
+    sudo snap try squashfs-root/
+    sudo snap connect husarion-astra:raw-usb
+
+    end_time=$(date +%s)
+    duration=$(( end_time - start_time ))
+
+    hours=$(( duration / 3600 ))
+    minutes=$(( (duration % 3600) / 60 ))
+    seconds=$(( duration % 60 ))
+
+    printf "Script completed in %02d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
+
+publish:
+    #!/bin/bash
+    snapcraft login
+    snapcraft upload --release edge husarion-astra*.snap
