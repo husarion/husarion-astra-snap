@@ -92,7 +92,14 @@ iterate-fast:
 
     printf "Script completed in %02d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
 
+prepare-store-credentials:
+    #!/bin/bash
+    snapcraft export-login --snaps=husarion-astra \
+      --acls package_access,package_push,package_update,package_release \
+      exported.txt
+
 publish:
     #!/bin/bash
+    export SNAPCRAFT_STORE_CREDENTIALS=$(cat exported.txt)
     snapcraft login
     snapcraft upload --release edge husarion-astra*.snap
