@@ -8,7 +8,7 @@
     vendor_id: '0x2bc5'
     product_id: ''
     enable_point_cloud: true
-    enable_colored_point_cloud: true
+    enable_colored_point_cloud: false
     point_cloud_qos: default
     connection_delay: 100
     color_width: 640
